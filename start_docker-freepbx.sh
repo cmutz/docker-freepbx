@@ -2,7 +2,7 @@
 
 # Credit -> https://github.com/BetterVoice/freeswitch-container
 
-CID=$(sudo docker run -d -p 5060-5061:5060-5061/udp -p 8080:80/tcp -t jmar71n/freepbx)
+CID=$(sudo docker run -d -p 5060-5061:5060-5061/udp -p 8080:80/tcp -t docker-freepbx:mutz)
 
 CIP=$(sudo docker inspect --format='{{.NetworkSettings.IPAddress}}' $CID)
 

@@ -23,8 +23,7 @@ COPY start-asterisk.sh /etc/service/asterisk/run
 RUN chmod +x /etc/service/asterisk/run
 
 COPY start-amportal.sh /etc/my_init.d/start-amportal.sh
-
-
+RUN chmod +x /etc/my_init.d/start-amportal.sh
 
 RUN apt-get -qq update \
     && apt-get upgrade -y \
@@ -80,6 +79,8 @@ RUN apt-get -qq update \
 			sudo \
 			libmyodbc \
 			subversion \
+			fail2ban \
+			supervisor \
 		&& apt-get clean \
 		&& rm -rf /var/lib/apt/lists/*
 
@@ -201,30 +202,13 @@ RUN curl -sf -o freepbx.tgz -L http://mirror.freepbx.org/modules/packages/freepb
 	&& /usr/sbin/asterisk \
 	&& sleep 5 \
 	&& ./install -n \
-	&& fwconsole restart \
 	&& rm -r /usr/src/freepbx
 
 WORKDIR /
 
-
-# Fix
-RUN rm /usr/sbin/policy-rc.d
-RUN touch /etc/network/interfaces
-
-# Fix for systemd on docker
-RUN cd /lib/systemd/system/sysinit.target.wants/; ls | grep -v systemd-tmpfiles-setup | xargs rm -f $1 \
-    rm -f /lib/systemd/system/multi-user.target.wants/*;\
-    rm -f /etc/systemd/system/*.wants/*;\
-    rm -f /lib/systemd/system/local-fs.target.wants/*; \
-    rm -f /lib/systemd/system/sockets.target.wants/*udev*; \
-    rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
-    rm -f /lib/systemd/system/basic.target.wants/*;\
-    rm -f /lib/systemd/system/anaconda.target.wants/*; \
-    rm -f /lib/systemd/system/plymouth*; \
-    rm -f /lib/systemd/system/systemd-update-utmp*;
-RUN systemctl set-default multi-user.target
+ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 VOLUME [ "/sys/fs/cgroup" ]
 EXPOSE 22 80 443 5060 1000-2000
+ENTRYPOINT ["/usr/bin/supervisord"]
 
-ENTRYPOINT ["/lib/systemd/systemd"]
